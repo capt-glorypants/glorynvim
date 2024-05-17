@@ -22,6 +22,12 @@ end
 vim.opt.number = true
 vim.opt.relativenumber = true
 
+-- Set default indentation rules
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.smartindent = true
+
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
@@ -33,8 +39,11 @@ vim.opt.showmode = false
 --  See `:help 'clipboard'`
 vim.opt.clipboard = 'unnamedplus'
 
--- Enable break indent
-vim.opt.breakindent = true
+-- Line-wrapping
+-- vim.opt.breakindent = true
+vim.opt.wrap = false
+vim.opt.sidescrolloff = 8
+vim.keymap.set('n', '_', '0_', { noremap = true })
 
 -- Save undo history
 vim.opt.undofile = true
@@ -170,18 +179,24 @@ require('lazy').setup({
   --  This is equivalent to:
   --    require('Comment').setup({})
 
-  -- " c" to comment lines or visual regions
+  -- " m" to comment lines or visual regions
   {
     'numToStr/Comment.nvim',
-    opts = {
-      ignore = '^$',
-      toggler = {
-        line = '<leader>m',
-      },
-      opleader = {
-        line = '<leader>m',
-      },
-    },
+    config = function()
+      require('Comment').setup {
+        ignore = '^$',
+        toggler = {
+          line = ' m',
+        },
+      }
+
+      vim.keymap.set('n', 'gct', function()
+        vim.api.nvim_input ' mj mk'
+      end)
+
+      local ft = require 'Comment.ft'
+      ft.set('hlsl', '//%s')
+    end,
   },
 
   -- Here is a more advanced example where we pass configuration
@@ -226,38 +241,38 @@ require('lazy').setup({
         return '<CMD>w<CR><CMD>terminal source ~/.zshrc && ' .. str .. '<CR>'
       end
 
-      --local wk = require 'which-key'
       require('which-key').register({
         w = { Cmd 'w', 'Write' },
         q = { Cmd 'qa', 'Quit' },
+
+        b = { name = 'Buffer', _ = 'which_key_ignore' },
+        d = { name = 'Diagnostics', _ = 'which_key_ignore' },
+        g = { name = 'Godot', _ = 'which_key_ignore' },
+        l = { name = 'LSP', _ = 'which_key_ignore' },
+        s = { name = 'Search', _ = 'which_key_ignore' },
+        S = { name = 'Session', _ = 'which_key_ignore' },
+        t = { name = 'Terminal', _ = 'which_key_ignore' },
+
+        a = {
+          name = 'All',
+          c = { 'ggcG', 'Change' },
+          d = { 'ggdG', 'Delete' },
+          p = { 'ggVGp', 'Paste' },
+          y = { 'ggyG<C-O>', 'Yank' },
+          v = { 'ggVG', 'Visual' },
+          w = { Cmd 'wa', 'Write' },
+        },
+
         p = {
           name = 'Packages',
           l = { Cmd 'Lazy', 'Lazy' },
           m = { Cmd 'Mason', 'Mason' },
         },
-        b = { name = 'Buffer', _ = 'which_key_ignore' },
-        d = { name = 'Diagnostics', _ = 'which_key_ignore' },
-        l = { name = 'LSP', _ = 'which_key_ignore' },
-        s = { name = 'Search', _ = 'which_key_ignore' },
-        S = { name = 'Session', _ = 'which_key_ignore' },
-        g = { name = 'Godot', _ = 'which_key_ignore' },
-        a = {
-          name = 'All',
 
-          d = { 'ggdG', 'Delete' },
-          p = { 'ggVGp', 'Paste' },
-          y = { 'ggyG<C-O>', 'Yank' },
-          v = { 'ggVG', 'Visual' },
-        },
         r = {
           name = 'Run',
-
           b = { term 'carco bevy' .. ':b#<CR>zz', 'Bevy' },
           B = { term 'carco bevy', 'Bevy with terminal' },
-          -- b = { ':w<CR>:terminal source ~/.zshrc && carco bevy<CR>:b#<CR>zz', 'Bevy' },
-          -- B = { ':w<CR>:terminal source ~/.zshrc && carco bevy<CR>', 'Bevy with terminal' },
-          -- g = { ':w<CR>:terminal source ~/.zshrc && godot<CR>:b#<CR>zz', 'Godot' },
-          -- G = { ':w<CR>:terminal source ~/.zshrc && godot<CR>', 'Godot with terminal' },
         },
       }, { prefix = '<leader>' })
     end,
@@ -659,6 +674,7 @@ require('lazy').setup({
       --  into multiple repos for maintenance purposes.
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+      'hrsh7th/cmp-buffer',
     },
     config = function()
       -- See `:help cmp`
@@ -736,7 +752,6 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    -- 'folke/tokyonight.nvim',
     'ellisonleao/gruvbox.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
@@ -878,9 +893,6 @@ require('lazy').setup({
               separator = '▍',
             },
           },
-          -- indicator = {
-          --   style = 'none',
-          -- },
           separator_style = 'slope',
           custom_areas = {
             left = function()
@@ -1007,7 +1019,6 @@ require('lazy').setup({
   {
     'tiagovla/scope.nvim',
     config = function()
-      -- init.lua
       vim.opt.sessionoptions = { -- required
         'buffers',
         'tabpages',
@@ -1028,7 +1039,7 @@ require('lazy').setup({
             return vim.o.columns * 0.5
           end
         end,
-        open_mapping = [[<F7>]],
+        open_mapping = [[<F6>]],
         autchdir = true,
         shell = 'zsh',
         shade_terminals = false,
@@ -1043,6 +1054,10 @@ require('lazy').setup({
 
       Map('i', '<C-w>', [[<C-\><C-n><C-w>]], opts)
       Map('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
+
+      vim.keymap.set('t', '<C-u>', [[<C-\><C-n><C-u>]], { noremap = true })
+      -- vim.keymap.set('t', '<C-d>', [[<C-\><C-n><C-d>]], { noremap = true })
+      vim.keymap.set('t', '<C-e>', [[<C-u>]], { noremap = true })
 
       Map('n', '<leader>th', Cmd 'ToggleTerm direction=horizontal', opts)
       Map('n', '<leader>tv', Cmd 'ToggleTerm direction=vertical', opts)
@@ -1168,18 +1183,24 @@ require('lazy').setup({
       Map('n', '<leader>gc', Cmd 'GodotRunCurrent', { desc = 'Run current scene' })
       Map('n', '<leader>gl', Cmd 'GodotRunLast', { desc = 'Run last scene' })
       Map('n', '<leader>gs', Cmd 'GodotRunFZF', { desc = 'Run scene' })
+
+      -- vim.api.nvim_create_autocmd('TextChangedI', {
+      --   desc = 'Force Godot LSP',
+      --   group = vim.api.nvim_create_augroup('godot-lsp-prompt', { clear = true }),
+      --   callback = function()
+      --     vim.api.nvim_input '<C-a>'
+      --   end,
+      -- })
     end,
   },
-  {
-    'junegunn/fzf',
-  },
+  'junegunn/fzf',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  { import = 'custom.plugins' },
+  { import = 'plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1202,16 +1223,22 @@ require('lazy').setup({
   },
 })
 
+-- TODO: delimiter pairs
+-- TODO: Auto move terminal on resize
+-- TODO: Search Grep/word
 -- TODO: statusline: other content
 -- TODO: filetree: movements, hide files, line numbers
 -- TODO: prettier wk
 -- TODO: Telescope layout other way
 -- TODO: indent line
--- TODO: Split up plugins
--- TODO: home page
 -- TODO: don't yank visual replace
+-- TODO: undo-tree
+-- TODO: other mini plugins
 -- TODO: persist tabs
 -- TODO: git fugitive
 -- TODO: nvim-dap
+-- TODO: home page
+-- TODO: maybe don't save session in home directory
+-- TODO: caseWord_operations
 -- TODO: FiraCode variants: 0@$ =<
 -- TODO: FiraProto fr (?+others)
